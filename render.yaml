@@ -9,7 +9,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.13.7
       - key: DATABASE_URL
-        sync: false
+        value: sqlite:///./knowledge.db
       - key: AI_API_KEY
         sync: false
       - key: AI_API_BASE

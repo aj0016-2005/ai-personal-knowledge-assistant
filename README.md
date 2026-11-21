@@ -34,5 +34,5 @@ Copy `.env.example` to `.env` and set `AI_API_KEY`. Environment variables are lo
 2. Create a free Render Web Service from the repository.
 3. Set build command to `pip install -r requirements.txt`.
 4. Set start command to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-5. Add `DATABASE_URL` from Neon or another PostgreSQL provider.
+5. Leave `DATABASE_URL` as `sqlite:///./knowledge.db` for an ephemeral demo, or replace it with a valid PostgreSQL URL from Neon.
 6. Optionally add `AI_API_KEY`, `AI_API_BASE`, and `AI_MODEL`.

@@ -16,11 +16,14 @@ from sqlalchemy import create_engine, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./knowledge.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./knowledge.db").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+if not DATABASE_URL.startswith(("sqlite://", "postgresql+psycopg://")):
+    print("Invalid DATABASE_URL: expected SQLite or PostgreSQL; using SQLite fallback.")
+    DATABASE_URL = "sqlite:///./knowledge.db"
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
