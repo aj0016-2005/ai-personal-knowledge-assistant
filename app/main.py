@@ -155,7 +155,10 @@ async def ai_answer(question: str, context: str) -> str:
         except httpx.HTTPError:
             return local_answer(context) + "\n\nThe AI provider was unavailable; this answer came from local retrieval."
     if response.status_code >= 400:
-        return local_answer(context) + "\n\nThe AI provider returned an error; this answer came from local retrieval."
+        return (
+            local_answer(context)
+            + f"\n\nAI provider error HTTP {response.status_code}; this answer came from local retrieval."
+        )
     try:
         return response.json()["choices"][0]["message"]["content"]
     except (KeyError, IndexError, ValueError, TypeError):
