@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knowledge Assistant</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <aside>
+      <div class="brand"><span class="brand-mark">KA</span><span>Knowledge Assistant</span></div>
+      <label class="upload" for="file-input">
+        <input id="file-input" type="file" accept=".pdf,.docx,.txt,.md,.csv">
+        <span id="upload-label">+ Upload document</span>
+      </label>
+      <div id="documents" class="documents"></div>
+    </aside>
+    <section class="chat">
+      <header>
+        <div>
+          <p class="eyebrow">Workspace</p>
+          <h1>Ask your documents</h1>
+        </div>
+        <span id="status" class="status">Local mode</span>
+      </header>
+      <div id="messages" class="messages">
+        <article class="message assistant">
+          <div class="avatar">KA</div>
+          <div class="bubble">Upload a document, then ask a question about its content.</div>
+        </article>
+      </div>
+      <form id="chat-form" class="composer">
+        <input id="chat-input" autocomplete="off" placeholder="Ask a question..." aria-label="Question">
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
