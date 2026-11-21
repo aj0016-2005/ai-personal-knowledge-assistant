@@ -28,3 +28,9 @@ def test_local_answer_fallback() -> None:
 
     answer = local_answer("A computer engineering document.")
     assert "most relevant information" in answer
+
+
+def test_status_endpoint() -> None:
+    response = client.get("/api/status")
+    assert response.status_code == 200
+    assert response.json()["mode"] in {"ai", "local"}

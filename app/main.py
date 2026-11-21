@@ -177,6 +177,17 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/api/status")
+async def status() -> dict:
+    api_key = os.getenv("AI_API_KEY", "").strip()
+    return {
+        "mode": "ai" if api_key else "local",
+        "configured": bool(api_key),
+        "provider": os.getenv("AI_API_BASE", "https://api.openai.com/v1"),
+        "model": os.getenv("AI_MODEL", "gpt-4o-mini"),
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
     return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"))

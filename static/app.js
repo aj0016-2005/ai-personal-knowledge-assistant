@@ -6,6 +6,18 @@ const uploadLabel = document.getElementById("upload-label");
 const documents = document.getElementById("documents");
 const status = document.getElementById("status");
 
+async function loadStatus() {
+  try {
+    const response = await fetch("/api/status");
+    const result = await response.json();
+    status.textContent = result.configured ? `${result.model} mode` : "Local mode";
+  } catch {
+    status.textContent = "Offline";
+  }
+}
+
+loadStatus();
+
 function addMessage(role, text) {
   const article = document.createElement("article");
   article.className = `message ${role}`;
