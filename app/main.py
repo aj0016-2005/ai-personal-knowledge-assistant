@@ -191,6 +191,43 @@ async def status() -> dict:
     }
 
 
+@app.post("/api/provider-test")
+async def provider_test() -> dict:
+    api_key = os.getenv("AI_API_KEY", "").strip()
+    if not api_key:
+        return {"configured": False, "message": "AI_API_KEY is not configured."}
+
+    base_url = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
+    model = os.getenv("AI_MODEL", "gpt-4o-mini")
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+        "temperature": 0,
+        "max_tokens": 5,
+    }
+    async with httpx.AsyncClient(timeout=45) as client:
+        try:
+            response = await client.post(
+                f"{base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload,
+            )
+        except httpx.HTTPError as error:
+            return {"configured": True, "http_status": None, "message": f"Network error: {type(error).__name__}"}
+
+    if response.status_code >= 400:
+        try:
+            provider_message = response.json().get("error", {}).get("message", "")
+        except ValueError:
+            provider_message = ""
+        return {
+            "configured": True,
+            "http_status": response.status_code,
+            "message": provider_message[:300],
+        }
+    return {"configured": True, "http_status": 200, "message": "Provider responded successfully."}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
     return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"))

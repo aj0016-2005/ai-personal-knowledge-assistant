@@ -34,3 +34,9 @@ def test_status_endpoint() -> None:
     response = client.get("/api/status")
     assert response.status_code == 200
     assert response.json()["mode"] in {"ai", "local"}
+
+
+def test_provider_test_reports_missing_key() -> None:
+    response = client.post("/api/provider-test")
+    assert response.status_code == 200
+    assert "configured" in response.json()
