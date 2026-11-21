@@ -127,13 +127,7 @@ def retrieve(query: str, chunks: list[str], limit: int = 4) -> list[str]:
 async def ai_answer(question: str, context: str) -> str:
     api_key = os.getenv("AI_API_KEY")
     if not api_key:
-        if not context:
-            return "I could not find relevant text in the uploaded documents."
-        return (
-            "Here is the most relevant information I found:\n\n"
-            f"{context[:2200]}\n\n"
-            "This is local extraction mode. Add AI_API_KEY for generated answers."
-        )
+        return local_answer(context)
 
     base_url = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
     model = os.getenv("AI_MODEL", "gpt-4o-mini")
@@ -152,14 +146,30 @@ async def ai_answer(question: str, context: str) -> str:
         "temperature": 0.2,
     }
     async with httpx.AsyncClient(timeout=45) as client:
-        response = await client.post(
-            f"{base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json=payload,
-        )
+        try:
+            response = await client.post(
+                f"{base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload,
+            )
+        except httpx.HTTPError:
+            return local_answer(context) + "\n\nThe AI provider was unavailable; this answer came from local retrieval."
     if response.status_code >= 400:
-        raise HTTPException(502, "The AI provider returned an error.")
-    return response.json()["choices"][0]["message"]["content"]
+        return local_answer(context) + "\n\nThe AI provider returned an error; this answer came from local retrieval."
+    try:
+        return response.json()["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, ValueError, TypeError):
+        return local_answer(context) + "\n\nThe AI response was invalid; this answer came from local retrieval."
+
+
+def local_answer(context: str) -> str:
+    if not context:
+        return "I could not find relevant text in the uploaded documents."
+    return (
+        "Here is the most relevant information I found:\n\n"
+        f"{context[:2200]}\n\n"
+        "This is local extraction mode. Add a valid AI_API_KEY for generated answers."
+    )
 
 
 @app.get("/health")

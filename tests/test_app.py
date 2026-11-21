@@ -21,3 +21,10 @@ def test_homepage() -> None:
 def test_chat_rejects_empty_message() -> None:
     response = client.post("/api/chat", json={"message": "  "})
     assert response.status_code == 400
+
+
+def test_local_answer_fallback() -> None:
+    from app.main import local_answer
+
+    answer = local_answer("A computer engineering document.")
+    assert "most relevant information" in answer
