@@ -130,7 +130,7 @@ async def ai_answer(question: str, context: str) -> str:
         return local_answer(context)
 
     base_url = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
-    model = os.getenv("AI_MODEL", "gpt-4o-mini")
+    model = os.getenv("AI_MODEL", "llama-3.1-8b-instant")
     payload = {
         "model": model,
         "messages": [
@@ -145,24 +145,34 @@ async def ai_answer(question: str, context: str) -> str:
         ],
         "temperature": 0.2,
     }
+    models = [model]
+    if base_url.startswith("https://api.groq.com"):
+        for groq_model in ("llama-3.1-8b-instant", "llama-3.3-70b-versatile"):
+            if groq_model not in models:
+                models.append(groq_model)
+
     async with httpx.AsyncClient(timeout=45) as client:
-        try:
-            response = await client.post(
-                f"{base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=payload,
-            )
-        except httpx.HTTPError:
-            return local_answer(context) + "\n\nThe AI provider was unavailable; this answer came from local retrieval."
-    if response.status_code >= 400:
+        for candidate in models:
+            payload["model"] = candidate
+            try:
+                response = await client.post(
+                    f"{base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json=payload,
+                )
+            except httpx.HTTPError:
+                continue
+            if response.status_code < 400:
+                try:
+                    return response.json()["choices"][0]["message"]["content"]
+                except (KeyError, IndexError, ValueError, TypeError):
+                    continue
+    if "response" in locals() and response.status_code >= 400:
         return (
             local_answer(context)
             + f"\n\nAI provider error HTTP {response.status_code}; this answer came from local retrieval."
         )
-    try:
-        return response.json()["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, ValueError, TypeError):
-        return local_answer(context) + "\n\nThe AI response was invalid; this answer came from local retrieval."
+    return local_answer(context) + "\n\nThe AI provider was unavailable; this answer came from local retrieval."
 
 
 def local_answer(context: str) -> str:
@@ -187,7 +197,7 @@ async def status() -> dict:
         "mode": "ai" if api_key else "local",
         "configured": bool(api_key),
         "provider": os.getenv("AI_API_BASE", "https://api.openai.com/v1"),
-        "model": os.getenv("AI_MODEL", "gpt-4o-mini"),
+        "model": os.getenv("AI_MODEL", "llama-3.1-8b-instant"),
     }
 
 
